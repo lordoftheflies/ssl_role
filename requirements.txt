@@ -1,0 +1,3 @@
+PyOpenSSL>=0.15 # if using selfsigned or assertonly provider
+cryptography>=1.6 # if using selfsigned or assertonly provider
+acme-tiny # if using the acme provider
