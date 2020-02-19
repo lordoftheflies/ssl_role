@@ -31,14 +31,14 @@ provisioner:
   lint:
     name: ansible-lint
   inventory:
-      hosts:
-        all:
-        ssl_servers:
-          hosts:
-            'a.ssl.test':
-              endpoint: 'a.ssl.test'
-              public: 'a.ssl.test'
-              secure: 'a.ssl.test'
+    hosts:
+      all:
+      ssl_servers:
+        hosts:
+          'a.ssl.test':
+            endpoint: 'a.ssl.test'
+            public: 'a.ssl.test'
+            secure: 'a.ssl.test'
 verifier:
   name: testinfra
   lint:
