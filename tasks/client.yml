@@ -1,0 +1,42 @@
+---
+- name: "Ensure docker client directory exists"
+  file:
+    path: "{{ lookup('env', 'pwd') }}/.docker"
+    state: directory
+  tags: ["docker", "client"]
+
+- name: "Copy certificates to docker client"
+  file:
+    src: "{{ item }}"
+    dest: "{{ lookup('env', 'pwd') }}/.docker/{{ item }}"
+    state: file
+  with_items:
+    - "{{ docker_ca_path }}"
+    - "{{ docker_cert_path }}"
+    - "{{ docker_key_path }}"
+  tags: ["docker", "client"]
+
+- name: "Ensure current user has docker group"
+  when: docker_client_user_privileged is not defined
+  user:
+    name: "{{ lookup('env','USER') }}"
+    groups: "{{ docker_group }}"
+    state: state|default("present")
+    append: true
+    remove: true
+  tags: ["docker", "client"]
+
+- name: "Set Docker client configuration directory"
+  when: docker_client_config_path is not defined and docker_client_user_privileged
+  set_fact:
+    docker_client_config_path: "{{ lookup('env', 'pwd') }}/.docker"
+    cacheable: true
+  tags: ["docker", "client"]
+
+- name: "Set Docker client certificate path facts"
+  tags: ["docker", "client"]
+  set_fact:
+    docker_ca_path: "{{ docker_client_config_path }}/{{ ssl_role_ca_key_file }}"
+    docker_key_path: "{{ docker_client_config_path }}/{{ ssl_role_certificate_key_file }}"
+    key_path: "{{ docker_client_config_path }}/{{ ssl_role_private_key_file }}"
+    cacheable: true

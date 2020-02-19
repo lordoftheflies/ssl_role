@@ -1,0 +1,27 @@
+---
+- name: Destroy
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  no_log: "{{ molecule_no_log }}"
+  tasks:
+    # Developer must implement.
+
+    # Mandatory configuration for Molecule to function.
+    - name: Populate instance config
+      set_fact:
+        instance_conf: {
+          'instance': "{{ item.instance.hw_name }}",
+          'address': "{{ item.instance.ipv4 }}",
+          'user': "{{ lookup('env', 'USER') }}",
+          'port': "22",
+          'identity_file': "{{ lookup('env', 'PWD') }}/.ssh/id_rsa",
+          'timestamp': "{{ instance_conf_dict.timestamp }}"
+        }
+      with_items: "{{ molecule_yml.platforms }}"
+
+    - name: Dump instance config
+      copy:
+        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
+        dest: "{{ molecule_instance_config }}"
+      when: server.changed | bool
