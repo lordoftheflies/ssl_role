@@ -23,8 +23,8 @@ install:
 before_script:
   # Use actual Ansible Galaxy role name for the project directory.
   - cd ../
-  - cp -r java_role lordoftheflies.java_role
-  - cd lordoftheflies.java_role
+  - cp -r ssl_role lordoftheflies.ssl_role
+  - cd lordoftheflies.ssl_role
 script:
   # Basic role syntax check
   - .env/bin/ansible-playbook tests/test.yml -i tests/inventory --syntax-check
