@@ -3,3 +3,5 @@
 ssl_role_ca_key_file: "ca.pem"
 ssl_role_certificate_key_file: "cert.pem"
 ssl_role_private_key_file: "key.pem"
+certificate_authority:
+existing_certificates:

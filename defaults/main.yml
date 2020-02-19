@@ -1,2 +1,4 @@
 ---
 docker_daemon_public_port: 2375
+certificate_authority: "localhost.localdomain"
+existing_certificates: []
