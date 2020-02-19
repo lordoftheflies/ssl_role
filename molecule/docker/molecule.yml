@@ -9,18 +9,18 @@ lint:
     config-file: .ansible-lint
 platforms:
   - name: ubuntu1804
-    hostname: 'x.ssl.test'
-    image: "quay.io/ubuntu:latest"
+    hostname: 'a.ssl.test'
+    image: "registry.hub.docker.com/ubuntu:18.04"
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     dockerfile: Dockerfile.j2
     pull: true
     registry:
-      url: quay.io
+      url: registry.hub.docker.com
       credentials:
         username: lordoftheflies
-        password: 5OPJPtvmIxnibCmHVzhzWZzDf+lXMpy4ANOA88tD4W3/93mf/0aqSrD5/eCR2wMO
+        password: 90e22074-32e9-4485-a292-4deee07227c6
         email: laszlo.hegedus@cherubits.hu
         user: root
     privileged: true
@@ -30,6 +30,15 @@ provisioner:
   log: true
   lint:
     name: ansible-lint
+  inventory:
+      hosts:
+        all:
+        ssl_servers:
+          hosts:
+            'a.ssl.test':
+              endpoint: 'a.ssl.test'
+              public: 'a.ssl.test'
+              secure: 'a.ssl.test'
 verifier:
   name: testinfra
   lint:
