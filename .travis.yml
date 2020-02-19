@@ -15,7 +15,7 @@ addons:
 install:
   - virtualenv .env
   - .env/bin/pip install -U pip
-  - .env/bin/pip install ansible molecule molecule[lint]
+  - .env/bin/pip install ansible molecule molecule[lint] yamllint
 
   # Check ansible version
   - .env/bin/ansible --version
