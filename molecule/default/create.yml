@@ -26,7 +26,7 @@
       local_action:
         copy:
           content: "{{ server }}"
-          dest="{{ lookup('env', 'PWD') }}/{{ item.name }}.log"
+          dest: "{{ lookup('env', 'PWD') }}/{{ item.name }}.log"
     # Developer must map instance config.
     # Mandatory configuration for Molecule to function.
 
