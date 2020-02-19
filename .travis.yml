@@ -9,16 +9,15 @@ sudo: false
 addons:
   apt:
     packages:
-      - python-pip
+      - python3-pip
       - libssl-dev
 
 install:
-  - virtualenv .env
-  - .env/bin/pip install -U pip
-  - .env/bin/pip install ansible molecule molecule[lint] yamllint
+  - pip install -U pip
+  - pip install ansible molecule molecule[lint] yamllint
 
   # Check ansible version
-  - .env/bin/ansible --version
+  - ansible --version
 
 before_script:
   # Use actual Ansible Galaxy role name for the project directory.
@@ -27,8 +26,8 @@ before_script:
   - cd lordoftheflies.ssl_role
 script:
   # Basic role syntax check
-  - .env/bin/ansible-playbook tests/test.yml -i tests/inventory.ini --syntax-check
-  - .env/bin/molecule test
+  - ansible-playbook tests/test.yml -i tests/inventory.ini --syntax-check
+  - molecule test
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
