@@ -8,13 +8,13 @@
 - name: "Create host group from all public endpoint-host which public and secure"
   tags: ["ssl"]
   add_host:
-    name: "{{ endpoint }}"
+    name: "{{ current_endpoint }}"
     groups: ssl_servers
     certificate_authority: "{{ certificate_authority }}"
   with_items:
     - "{{ groups['all'] }}"
   loop_control:
-    loop_var: endpoint
+    loop_var: current_endpoint
   when: >
     (public is defined and public | length > 0)
     and
@@ -30,11 +30,11 @@
 
 - name: "Set fact of SSL certificate fqdn list"
   set_fact:
-    client_certificates: "{{ existing_certificates + groups['ssl_servers'] }}"
+    client_certificates: existing_certificates + groups['ssl_servers']
 - debug: var=client_certificates, verbosity=1
 
 - name: "Play SSL for each CA"
-  when: "'ssl_servers' not in group_names"
+  #  when: "'ssl_servers' not in group_names"
   block:
 
     - debug: msg="endpoint={{ inventory_hostname }} "

@@ -82,3 +82,4 @@ ansible/roles/*\.*/
 .cache/
 .pytest_cache/
 pytestdebug.log
+*.env.json

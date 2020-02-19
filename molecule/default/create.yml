@@ -5,39 +5,54 @@
   gather_facts: true
   no_log: "{{ molecule_no_log }}"
   tasks:
-    # Developer must implement.
+
+    - name: "Initialize"
+      set_fact:
+        server: {}
+    - name: "Initialize"
+      set_fact:
+        server:
+          results: []
+
     - name: "Create instances"
       set_fact:
-        server: {
-          'name': "{{ item.name }}",
-          'hostname': "{{ item.instance.hw_name }}",
-          'username': "{{ item.user }}",
-          'password': "{{ item.password }}",
-          'hardware': {
-            'memory_mb': "{{ item.memory | default(omit) }}",
-            'num_cpus': "{{ item.cpu | default(omit) }}"
-          },
-          'wait_for_ip_address': "yes"
-          'state': poweredon
-          'timestamp': "{{ ansible.epoch }}"
-        }
+        server:
+          results: "{{ ([ {
+            'name': item.name,
+            'instance': item.instance,
+            'ipv4': item.ipv4,
+            'username': item.user,
+            'password': item.password,
+            'hardware': {
+              'memory_mb': item.memory | default(omit),
+              'num_cpus': item.cpu | default(omit),
+            },
+            'wait_for_ip_address': true,
+            'state': 'poweredon',
+            'timestamp': ansible_date_time.iso8601,
+          } ] + server.results) }}"
+          changed: true
       with_items: "{{ molecule_yml.platforms }}"
+    - debug: var=server.results, verbosity=0
+
     - name: "Externalize"
-      local_action:
-        copy:
-          content: "{{ server }}"
-          dest: "{{ lookup('env', 'PWD') }}/{{ item.name }}.log"
+      copy:
+        content: "{{ item | to_json }}"
+        dest: "{{ item.name }}.env.json"
+      delegate_to: localhost
+      with_items: "{{ server.results }}"
     # Developer must map instance config.
     # Mandatory configuration for Molecule to function.
 
-    - name: Populate instance config dict
+    - name: "Populate instance config dict"
       set_fact:
         instance_conf_dict: {
-          'instance': "{{ item.instance.hw_name }}",
-          'address': "{{ item.instance.ipv4 }}",
-          'user': "{{ lookup('env', 'USER') }}",
+          'name': "{{ item.name }}",
+          'instance': "{{ item.instance }}",
+          'address': "{{ item.ipv4 }}",
+          'user': "{{ item.username }}",
           'port': "22",
-          'identity_file': "{{ lookup('env', 'PWD') }}/.ssh/id_rsa",
+          'identity_file': "~/.ssh/id_rsa",
         }
       with_items: "{{ server.results }}"
       register: instance_config_dict

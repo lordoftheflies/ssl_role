@@ -13,15 +13,24 @@ addons:
       - libssl-dev
 
 install:
-  # Install ansible
-  - pip install ansible
+  - virtualenv .env
+  - .env/bin/pip install -U pip
+  - .env/bin/pip install ansible molecule molecule[lint]
 
   # Check ansible version
-  - ansible --version
+  - .env/bin/ansible --version
 
+
+
+before_script:
+  # Use actual Ansible Galaxy role name for the project directory.
+  - cd ../
+  - cp -r java_role lordoftheflies.java_role
+  - cd lordoftheflies.java_role
 script:
   # Basic role syntax check
-  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+  - .env/bin/ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+  - .env/bin/molecule test
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
