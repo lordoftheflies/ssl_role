@@ -14,7 +14,7 @@ addons:
 
 install:
   - pip install -U pip
-  - pip install ansible molecule molecule[lint] yamllint
+  - pip install ansible docker molecule[docker] molecule molecule[lint] yamllint
 
   # Check ansible version
   - ansible --version
