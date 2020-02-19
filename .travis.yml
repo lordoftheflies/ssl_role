@@ -20,8 +20,6 @@ install:
   # Check ansible version
   - .env/bin/ansible --version
 
-
-
 before_script:
   # Use actual Ansible Galaxy role name for the project directory.
   - cd ../

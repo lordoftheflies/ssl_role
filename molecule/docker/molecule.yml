@@ -1,0 +1,35 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint:
+  name: yamllint
+  options:
+    config-file: .ansible-lint
+platforms:
+  - name: ubuntu1804
+    hostname: 'x.ssl.test'
+    image: "quay.io/ubuntu:latest"
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    dockerfile: Dockerfile.j2
+    pull: true
+    registry:
+      url: registry.hub.docker.com
+      credentials:
+        username: lordoftheflies
+        password: Armageddon0
+        email: laszlo.hegedus@cherubits.hu
+        user: root
+    privileged: true
+    pre_build_image: true
+provisioner:
+  name: ansible
+  lint:
+    name: ansible-lint
+verifier:
+  name: testinfra
+  lint:
+    name: flake8
