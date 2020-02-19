@@ -17,16 +17,17 @@ platforms:
     dockerfile: Dockerfile.j2
     pull: true
     registry:
-      url: registry.hub.docker.com
+      url: quay.io
       credentials:
         username: lordoftheflies
-        password: Armageddon0
+        password: 5OPJPtvmIxnibCmHVzhzWZzDf+lXMpy4ANOA88tD4W3/93mf/0aqSrD5/eCR2wMO
         email: laszlo.hegedus@cherubits.hu
         user: root
     privileged: true
     pre_build_image: true
 provisioner:
   name: ansible
+  log: true
   lint:
     name: ansible-lint
 verifier:
