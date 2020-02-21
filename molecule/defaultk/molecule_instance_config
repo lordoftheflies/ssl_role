@@ -1,9 +1,0 @@
-# Molecule managed
-
----
-address: 127.0.0.1
-identity_file: ~/.ssh/id_rsa
-instance: leviathan.cherubits.hu
-port: 22
-timestamp: '2020-02-19T08:18:20Z'
-user: lordoftheflies
