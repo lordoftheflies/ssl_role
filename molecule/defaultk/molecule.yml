@@ -1,0 +1,59 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: delegated
+lint:
+  name: yamllint
+  options:
+    config-file: .ansible-lint
+platforms:
+  - name: 'a.ssl.test'
+    address: '127.0.0.1'
+    identity_file: '~/.ssh/id_rsa'  # mutually exclusive with password
+    instance: 'leviathan.cherubits.hu'
+    ipv4: '127.0.0.1'
+    port: 22
+    user: 'lordoftheflies'
+    password: 'Armageddon0'  # mutually exclusive with identity_file
+    become_method: 'sudo'  # optional
+    become_pass: 'qwe123'  # optional
+    privileged: true
+provisioner:
+  name: ansible
+  log: true
+  lint:
+    name: ansible-lint
+  inventory:
+    hosts:
+      all:
+      ssl_servers:
+        hosts:
+          'a.ssl.test':
+            endpoint: 'a.ssl.test'
+            public: 'a.ssl.test'
+            secure: 'a.ssl.test'
+          'b.ssl.test':
+          'c.ssl.test':
+        vars:
+          endpoint: true
+          public: true
+          secure: true
+  env:
+    ANSIBLE_REMOTE_USER: lordoftheflies
+    ANSIBLE_INTERPRETER_PYTHON: '/usr/bin/python3.7'
+
+  config_options:
+    defaults:
+      interpreter_python: /usr/bin/python3.7
+      # roles_path: ../../../
+      token: 2760cbdaf927dbdc9082fa3de73305540349b397
+      remote_tmp: /tmp/.ansible-${USER}/tmp
+      local_tmp: $HOME/.ansible/tmp
+      remote_user: lordoftheflies
+      become_user: lordoftheflies
+      private_key_file: ~/.ssh/id_rsa
+verifier:
+  name: testinfra
+  lint:
+    name: flake8

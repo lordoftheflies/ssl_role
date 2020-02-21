@@ -1,5 +1,6 @@
 ---
-- name: Converge
+- name: "Play converge ..."
+  become: true
   hosts: all
   roles:
     - role: ssl_role
