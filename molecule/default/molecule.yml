@@ -1,0 +1,91 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint:
+  name: yamllint
+  options:
+    config-file: .ansible-lint
+platforms:
+  - name: ubuntu1804
+    debug: true
+    image: "library/ubuntu:18.04"
+    volumes:
+      - ${HOME}/.ssh/id_rsa:/home/${USER}/.ssh/id_rsa
+      - ${HOME}/.ssh/id_rsa.pub:/home/${USER}/.ssh/id_rsa.pub
+      - /sys/fs/cgroup:/sys/fs/cgroup
+      - /tmp:/tmp
+      - /var/run/docker.sock:/var/run/docker.sock
+    dockerfile: Dockerfile.j2
+    pull: true
+    tty: true
+    registry:
+      url: registry.hub.docker.com
+      credentials:
+        username: lordoftheflies
+        password: 90e22074-32e9-4485-a292-4deee07227c6
+        email: laszlo.hegedus@cherubits.hu
+        user: root
+    privileged: true
+    pre_build_image: false
+    published_ports:
+      - 0.0.0.0:8022:22/tcp
+    dns_servers:
+      - 8.8.8.8
+    etc_hosts:
+      'c.ssl.test': '10.3.1.3'
+      'b.ssl.test': '10.3.1.2'
+      'a.ssl.test': '10.3.1.1'
+provisioner:
+  name: ansible
+  log: true
+  lint:
+    name: ansible-lint
+  inventory:
+    hosts:
+      ssl_servers:
+        hosts:
+          'a.ssl.test':
+            endpoint: 'a.ssl.test'
+            public: 'a.ssl.test'
+            secure: 'a.ssl.test'
+            ansible_user: ${USER}
+          'b.ssl.test':
+            endpoint: 'b.ssl.test'
+            public: 'b.ssl.test'
+            secure: 'b.ssl.test'
+            ansible_user: ${USER}
+            private_key_file: ${HOME}/.ssh/id_rsa
+      ca_servers:
+        hosts:
+          'c.ssl.test':
+            endpoint: 'c.ssl.test'
+            public: 'c.ssl.test'
+            secure: 'c.ssl.test'
+            ansible_user: ${USER}
+            private_key_file: ${HOME}/.ssh/id_rsa
+  env:
+    # DOCKER_HOST: ${MOLECULE_DOCKER_HOST:-"tcp://localhost:2375"}
+    # DOCKER_TLS: ${MOLECULE_DOCKER_TLS_VERIFY:-0}
+    # DOCKER_TLS_VERIFY: ${MOLECULE_DOCKER_TLS_VERIFY:-0}
+    # DOCKER_VALIDATE_CERTS: ${MOLECULE_DOCKER_VALIDATE_CERTS:-0}
+    # DOCKER_TLS_HOSTNAME: ${MOLECULE_DOCKER_TLS_HOSTNAME:-"leviathan"}
+    USERNAME: ${MOLECULE_DOCKER_USER:-"lordoftheflies"}
+    PASSWORD: ${MOLECULE_DOCKER_PASSWORD:-"90e22074-32e9-4485-a292-4deee07227c6"}
+    PUBLIC_SSH_KEY: ${MOLECULE_PUBLIC_SSH_KEY:-$(cat id_rsa.pub)}
+    # DOCKER_CERT_PATH: ${MOLECULE_DOCKER_CERT_PATH:-"/etc/docker/ssl"}
+  config_options:
+    defaults:
+      interpreter_python: /usr/bin/python3.7
+      # roles_path: ../../../
+      token: 2760cbdaf927dbdc9082fa3de73305540349b397
+      private_key_file: ${HOME}/.ssh/id_rsa
+
+      # remote_tmp: /tmp/.ansible-${USER}/tmp
+      # local_tmp: ${HOME}/.ansible/tmp
+      # private_key_file: ~/.ssh/id_rsa
+verifier:
+  name: testinfra
+  lint:
+    name: flake8

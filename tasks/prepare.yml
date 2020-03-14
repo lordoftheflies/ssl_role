@@ -1,0 +1,28 @@
+---
+- name: "Set docker daemon public host to hostname used by inventory"
+  when: docker_daemon_public_host is not defined
+  set_fact:
+    docker_daemon_public_host: inventory_hostname
+  tags: ["docker", "daemon"]
+- debug: var=docker_daemon_public_host, verbosity=1
+
+- name: "Set docker daemon public port to HTTPS default"
+  when: docker_daemon_public_port is not defined
+  set_fact:
+    docker_daemon_public_port: 443
+  tags: ["docker", "daemon"]
+- debug: var=docker_daemon_public_port, verbosity=1
+
+- name: "Set docker daemon host to fqdn or to listening every connection"
+  when: docker_daemon_host is not defined
+  set_fact:
+    docker_daemon_host: docker_daemon_public_host|default('0.0.0.0')
+  tags: ["docker", "daemon"]
+- debug: var=docker_daemon_public_host, verbosity=1
+
+- name: "Set docker daemon port"
+  when: docker_daemon_port is not defined
+  set_fact:
+    docker_daemon_port: docker_daemon_public_port|default('2345')
+  tags: ["docker", "daemon"]
+- debug: var=daemon_port, verbosity=1

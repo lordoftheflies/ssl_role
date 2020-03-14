@@ -9,19 +9,25 @@ sudo: false
 addons:
   apt:
     packages:
-      - python-pip
+      - python3-pip
       - libssl-dev
 
 install:
-  # Install ansible
-  - pip install ansible
+  - pip install -U pip
+  - pip install ansible docker molecule[docker] molecule molecule[lint] yamllint
 
   # Check ansible version
   - ansible --version
 
+before_script:
+  # Use actual Ansible Galaxy role name for the project directory.
+  - cd ../
+  - cp -r ssl_role lordoftheflies.ssl_role
+  - cd lordoftheflies.ssl_role
 script:
   # Basic role syntax check
-  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+  - ansible-playbook tests/test.yml -i tests/inventory.ini --syntax-check
+  - molecule test
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/

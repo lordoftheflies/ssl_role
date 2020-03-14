@@ -1,3 +1,4 @@
+---
 galaxy_info:
   author: lordoftheflies
   description: The role setup SSL certificates for inventory.

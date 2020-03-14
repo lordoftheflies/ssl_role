@@ -1,0 +1,81 @@
+---
+# Create a CA, server and client keys with OpenSSL
+- name: "Generate CA the root private key"
+  tags: ["ssl", "key", "ca", "generation", "private"]
+  command: "openssl genrsa -aes256 -out {{ ssl_role_ca_key_file }} 4096"
+
+# Create a CA, server and client keys with OpenSSL
+- name: "Generate CA the root public key"
+  tags: ["ssl", "key", "ca", "generation", "public"]
+  command: "openssl req -new -x509 -days 365 -key {{ ssl_role_ca_key_file }} -sha256 -out {{ ssl_role_ca_file }}"
+
+# Now that you have a CA, you can create a server key and certificate signing request (CSR). Make sure that
+# “Common Name” matches the hostname you use to connect to Docker
+# Note: Replace all instances of $HOST in the following example with the DNS name of your Docker daemon’s host.
+- name: "Generate CA the server key"
+  tags: ["ssl", "key", "ca", "generation", "private"]
+  command: "openssl genrsa -out {{ ssl_role_certificate_key_file }} 4096"
+
+- name: "Certificate request for server"
+  tags: ["ssl", "key", "server", "generation", "csr"]
+  command: "openssl req -subj \"/CN={{ ansible_fqdn }}\" -sha256 -new -key {{ ssl_role_certificate_key_file }} -out server.csr"
+
+# Next, we’re going to sign the public key with our CA:
+# Since TLS connections can be made through IP address as well as DNS name, the IP addresses need to be specified when
+# creating the certificate. For example, to allow connections using 10.10.10.20 and 127.0.0.1:
+- name: "Sign the server public key with our certificate-authority"
+  tags: ["ssl", "key", "server", "generation", "externalize"]
+  template:
+    src: extfile.cnf
+    dest: /root/ca/extfile.cnf
+
+- name: "Generate the signed certificate"
+  tags: ["ssl", "key", "client", "generation", "sign"]
+  command: >
+    "openssl x509 -req -days 100 -sha256 -in server.csr"
+     "-CA {{ ssl_role_ca_file }}"
+     "-CAkey {{ ssl_role_ca_key_file }}"
+     "-CAcreateserial"
+     "-out {{ ssl_role_certificate_file }}"
+     "-extfile extfile.cnf"
+
+
+# Authorization plugins offer more fine-grained control to supplement authentication from mutual TLS. In addition to
+# other information described in the above document, authorization plugins running on a Docker daemon receive the
+# certificate information for connecting Docker clients.
+- name: "Create a client key and certificate signing request"
+  tags: ["ssl", "key", "key", "generation", "privatekey"]
+  command: "openssl genrsa -out {{ ssl_role_private_key_file }} 4096"
+
+- name: "Certificate request for client"
+  tags: ["ssl", "key", "client", "generation", "csr"]
+  command: "openssl req -subj \"/CN=client\" -sha256 -new -key {{ ssl_role_client_key_file }} -out client.csr"
+
+- name: "Sign the client public key with our certificate-authority"
+  tags: ["ssl", "key", "client", "generation", "externalize"]
+  template:
+    src: extfile-client.cnf
+    dest: /root/ca/extfile-client.cnf
+
+- name: "Generate the client signed certificate"
+  tags: ["ssl", "key", "client", "generation", "sign"]
+  command: >
+    "openssl x509 -req -days 365 -sha256"
+    "-in client.csr"
+    "-CA {{ ssl_role_ca_file }}"
+    "-CAkey {{ ssl_role_ca_key_file }}"
+    "-CAcreateserial"
+    "-out {{ ssl_role_certificate_file }}"
+    "-extfile extfile-client.cnf"
+  # notify: ssl cleanup
+
+- name: "After generating cert.pem and server-cert.pem you can safely remove the two certificate signing requests and extensions config files"
+  tags: ["ssl", "cleanup"]
+  file:
+    path: "/root/ca/{{ item }}"
+    state: absent
+  with_items:
+    - client.csr
+    - server.csr
+    - extfile.cnf
+    - extfile-client.cnf
