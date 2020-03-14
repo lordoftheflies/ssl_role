@@ -1,0 +1,50 @@
+---
+- name: "The /root/ca folder is where we will store our private keys and certificates"
+  tags: ['ssl', 'ca', 'openssl', 'configure']
+  become: true
+  ini_file:
+    path: /etc/ssl/openssl.cnf
+    section: CA_default
+    option: dir
+    value: /root/ca
+    backup: true
+
+- name: "Set matched OpenSSL policy"
+  tags: ['ssl', 'ca', 'openssl', 'configure']
+  become: true
+  ini_file:
+    path: /etc/ssl/openssl.cnf
+    section: policy_match
+    option: "{{ item }}"
+    value: match
+    backup: true
+  with_items:
+    - countryName
+    - stateOrProvinceName
+    - organizationName
+
+- name: "Set optional OpenSSL policy"
+  tags: ['ssl', 'ca', 'openssl', 'configure']
+  become: true
+  ini_file:
+    path: /etc/ssl/openssl.cnf
+    section: policy_match
+    option: "{{ item }}"
+    value: optional
+    backup: true
+  with_items:
+    - organizationalUnitName
+    - emailAddress
+
+- name: "Set optional OpenSSL policy"
+  tags: ['ssl', 'ca', 'openssl', 'configure']
+  become: true
+  ini_file:
+    path: /etc/ssl/openssl.cnf
+    section: policy_match
+    option: "{{ item }}"
+    value: supplied
+    backup: true
+  with_items:
+    - organizationalUnitName
+    - emailAddress

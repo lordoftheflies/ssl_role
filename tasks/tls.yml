@@ -1,0 +1,30 @@
+---
+- name: "Copy CA certificate"
+  become: true
+  copy:
+    src: files/ca.pem
+    dest: /etc/ssl/ca.pem
+    owner: root
+    group: root
+    mode: '0600'
+    backup: true
+
+- name: "Copy server certificate"
+  become: true
+  copy:
+    src: files/cert.pem
+    dest: "/etc/ssl/certs/{{ inventory_hostname }}-cert.pem"
+    owner: root
+    group: root
+    mode: '0600'
+    backup: true
+
+- name: "Copy server key"
+  become: true
+  copy:
+    src: files/key.pem
+    dest: "/etc/ssl/private/{{ inventory_hostname }}-key.pem"
+    owner: root
+    group: root
+    mode: '0600'
+    backup: true

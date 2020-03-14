@@ -1,75 +1,168 @@
 ---
-- name: "Set fact certificate-authority fqdn"
+
+
+- name: "Include version-specific variables for OS."
+  include_vars: "{{ specific_variables }}"
+  with_first_found:
+    - files:
+        - "vars/{{ ansible_distribution|lower }}_{{ ansible_distribution_version }}.yml"
+        - "vars/{{ ansible_distribution|lower }}_{{ ansible_distribution_major_version }}.yml"
+        - "vars/{{ ansible_distribution|lower }}.yml"
+        - "vars/{{ ansible_os_family|lower }}.yml"
+      loop_control: loop_var=specific_variables
+      skip: true
+
+- name: "Include OS specific tasks"
+  include_tasks: "{{ specific_tasks }}"
+  with_first_found:
+    - files:
+        - "tasks/{{ ansible_distribution|lower }}_{{ ansible_distribution_version }}.yml"
+        - "tasks/{{ ansible_distribution|lower }}_{{ ansible_distribution_major_version }}.yml"
+        - "tasks/{{ ansible_distribution|lower }}.yml"
+        - "tasks/{{ ansible_os_family|lower }}.yml"
+      loop_control: loop_var=specific_tasks
+      skip: true
+
+
+- name: "Initialize ssl facts"
   set_fact:
-    certificate_authority_hostname: certificate_authority
-  tags: ["ssl", "ca"]
-- debug: var=certificate_authority_hostname, verbosity=1
+    server_certificate_facts: {
+        keys: {}
+        crts: {}
+      }
 
-- name: "Create host group from all public endpoint-host which public and secure"
-  tags: ["ssl"]
-  add_host:
-    name: "{{ current_endpoint }}"
-    groups: ssl_servers
-    certificate_authority: "{{ certificate_authority }}"
-  with_items:
-    - "{{ groups['all'] }}"
-  loop_control:
-    loop_var: current_endpoint
-  when: >
-    (public is defined and public | length > 0)
-    and
-    (secure is defined and secure | length > 0)
-    and
-    (endpoint is defined and secure | length > 0)
 
-- name: "Show hosts need a certificate"
-  tags: ["ssl"]
-  debug: msg="{{ item }}", verbosity=1
-  with_items:
-    - "{{ groups['ssl_servers'] }}"
-
-- name: "Set fact of SSL certificate fqdn list"
-  set_fact:
-    client_certificates: existing_certificates + groups['ssl_servers']
-- debug: var=client_certificates, verbosity=1
-
-- name: "Play SSL for each CA"
-  #  when: "'ssl_servers' not in group_names"
+- name: "Setup SSL certificate"
   block:
+    - name: "Check for certificate exists"
+      delegate_to: localhost
+      stat:
+        path: lookup('files', inventory_hostname + '.crt')
+      register: server_certificate_facts.crts[inventory_hostname]
 
-    - debug: msg="endpoint={{ inventory_hostname }} "
-
-    - name: "Play prepare ..."
-      import_tasks: prepare.yml
-      tags: ["ssl", "client"]
-
-    - name: "Setup OpenSSL"
-      import_tasks: ssl.yml
-
-    - name: "Generate certificates"
-      import_tasks: generate.yml
-
-    - name: "Fetch certificates"
-      fetch:
-        src: "/root/ca/{{ ssl_role_ca_file }}"
-        dest: "{{ lookup('env', 'pwd') }}/files/{{ inventory_hostname }}.ca.pem"
-        flat: true
-    - name: "Fetch certificates"
-      fetch:
-        src: "/root/ca/{{ ssl_role_certificate_file }}"
-        dest: "{{ lookup('env', 'pwd') }}/files/{{ inventory_hostname }}.cert.pem"
-        flat: true
-    - name: "Fetch certificates"
-      fetch:
-        src: "/root/ca/{{ ssl_role_private_key_file }}"
-        dest: "{{ lookup('env', 'pwd') }}/files/{{ inventory_hostname }}.key.pem"
-        flat: true
-
-    - name: "Play client ..."
-      import_tasks: client.yml
-      tags: ["ssl", "client"]
-
+    - name: "Copy server certificate"
+      become: true
+      when: server_certificate_facts.crts[inventory_hostname].stat.exists
+      file:
+        src: "files/{{ inventory_hostname }}.crt"
+        dest: "/etc/ssl/certs/{{ inventory_hostname }}.crt"
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+        state: file
   rescue:
-    - debug: msg="Securing {{ inventory_hostname }} failed"
+    - debug: msg="Could not setup server certificate"
   always:
-    - debug: msg="Certificates issued"
+    - name: "Check for certificate exists on remote"
+      stat:
+        path: lookup('files', inventory_hostname + '.crt')
+      register: ssl_role_stat_crt
+
+- name: "Setup SSL private key"
+  block:
+    - name: "Check for key exists"
+      delegate_to: localhost
+      stat:
+        path: lookup('files', inventory_hostname + '.key')
+      register: server_certificate_facts.keys[inventory_hostname]
+
+    - name: "Copy server private key"
+      become: true
+      when: server_certificate_facts.keys[inventory_hostname].stat.exists
+      file:
+        src: "files/{{ inventory_hostname }}.key"
+        dest: "/etc/ssl/private/{{ inventory_hostname }}.key"
+        owner: root
+        group: root
+        mode: u=rw
+        state: file
+  rescue:
+    - debug: msg="Could not setup server private key"
+  always:
+    - name: "Check for certificate exists on remote"
+      stat:
+        path: lookup('files', inventory_hostname + '.key')
+      register: ssl_role_stat_key
+
+- name: "Set SSL certificate facts"
+  set_fact:
+    ssl_role_fact_use_ssl: ssl_role_stat_key.stat.exists and ssl_role_stat_crt.stat.exists and ssl_role_secure|default(true)
+
+#
+#
+#- name: "Set fact certificate-authority fqdn"
+#  set_fact:
+#    certificate_authority_hostname: certificate_authority
+#  tags: ["ssl", "ca"]
+#- debug: var=certificate_authority_hostname, verbosity=1
+#
+#- name: "Create host group from all public endpoint-host which public and secure"
+#  tags: ["ssl"]
+#  add_host:
+#    name: "{{ current_endpoint }}"
+#    groups: ssl_servers
+#    certificate_authority: "{{ certificate_authority }}"
+#  with_items:
+#    - "{{ groups['all'] }}"
+#  loop_control:
+#    loop_var: current_endpoint
+#  when: >
+#    (public is defined and public | length > 0)
+#    and
+#    (secure is defined and secure | length > 0)
+#    and
+#    (endpoint is defined and secure | length > 0)
+#
+#- name: "Show hosts need a certificate"
+#  tags: ["ssl"]
+#  debug: msg="{{ item }}", verbosity=1
+#  with_items:
+#    - "{{ groups['ssl_servers'] }}"
+#
+#- name: "Set fact of SSL certificate fqdn list"
+#  set_fact:
+#    client_certificates: existing_certificates + groups['ssl_servers']
+#- debug: var=client_certificates, verbosity=1
+#
+#- name: "Play SSL for each CA"
+#  #  when: "'ssl_servers' not in group_names"
+#  block:
+#
+#    - debug: msg="endpoint={{ inventory_hostname }} "
+#
+#    - name: "Play prepare ..."
+#      import_tasks: prepare.yml
+#      tags: ["ssl", "client"]
+#
+#    - name: "Setup OpenSSL"
+#      import_tasks: ssl.yml
+#
+#    - name: "Generate certificates"
+#      import_tasks: generate.yml
+#
+#    - name: "Fetch certificates"
+#      fetch:
+#        src: "/root/ca/{{ ssl_role_ca_file }}"
+#        dest: "{{ lookup('env', 'pwd') }}/files/{{ inventory_hostname }}.ca.pem"
+#        flat: true
+#    - name: "Fetch certificates"
+#      fetch:
+#        src: "/root/ca/{{ ssl_role_certificate_file }}"
+#        dest: "{{ lookup('env', 'pwd') }}/files/{{ inventory_hostname }}.cert.pem"
+#        flat: true
+#    - name: "Fetch certificates"
+#      fetch:
+#        src: "/root/ca/{{ ssl_role_private_key_file }}"
+#        dest: "{{ lookup('env', 'pwd') }}/files/{{ inventory_hostname }}.key.pem"
+#        flat: true
+#
+#    - name: "Play client ..."
+#      import_tasks: client.yml
+#      tags: ["ssl", "client"]
+#
+#  rescue:
+#    - debug: msg="Securing {{ inventory_hostname }} failed"
+#  always:
+#    - debug: msg="Certificates issued"
+#
+#

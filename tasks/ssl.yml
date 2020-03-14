@@ -1,60 +1,12 @@
 ---
-- name: "The /root/ca folder is where we will store our private keys and certificates"
-  tags: ['ssl', 'ca', 'openssl', 'configure']
-  become: true
-  ini_file:
-    path: /etc/ssl/openssl.cnf
-    section: CA_default
-    option: dir
-    value: /root/ca
-    backup: true
 
-- name: "Set matched OpenSSL policy"
+- name: "Create index file"
   tags: ['ssl', 'ca', 'openssl', 'configure']
   become: true
-  ini_file:
-    path: /etc/ssl/openssl.cnf
-    section: policy_match
-    option: "{{ item }}"
-    value: match
-    backup: true
-  with_items:
-    - countryName
-    - stateOrProvinceName
-    - organizationName
-
-- name: "Set optional OpenSSL policy"
-  tags: ['ssl', 'ca', 'openssl', 'configure']
-  become: true
-  ini_file:
-    path: /etc/ssl/openssl.cnf
-    section: policy_match
-    option: "{{ item }}"
-    value: optional
-    backup: true
-  with_items:
-    - organizationalUnitName
-    - emailAddress
-
-- name: "Set optional OpenSSL policy"
-  tags: ['ssl', 'ca', 'openssl', 'configure']
-  become: true
-  ini_file:
-    path: /etc/ssl/openssl.cnf
-    section: policy_match
-    option: "{{ item }}"
-    value: supplied
-    backup: true
-  with_items:
-    - organizationalUnitName
-    - emailAddress
-
-- name: "Create file where OpenSSL keeps track of all signed certificates"
-  tags: ['ssl', 'ca', 'openssl', 'configure']
-  become: true
+  become_user: root
   file:
     path: /root/ca/index.txt
-    state: state | default('present')
+    state: "{{ 'touch' if state|default('present') == 'present' else 'absent' }}"
 
 - name: "Create file where OpenSSL keeps track of all signed certificates"
   tags: ['ssl', 'ca', 'openssl', 'configure']

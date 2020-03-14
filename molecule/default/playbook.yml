@@ -1,6 +1,12 @@
 ---
-- name: "Play converge ..."
+- name: "Play converge ca servers ..."
   become: true
-  hosts: all
+  hosts: ca_servers
+  roles:
+    - role: ssl_role
+
+- name: "Play converge client servers ..."
+  become: true
+  hosts: ssl_servers
   roles:
     - role: ssl_role
