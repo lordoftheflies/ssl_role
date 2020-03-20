@@ -1,3 +1,8 @@
-PyOpenSSL>=0.15 # if using selfsigned or assertonly provider
-cryptography>=1.6 # if using selfsigned or assertonly provider
-acme-tiny # if using the acme provider
+PyOpenSSL==19.1.0 # if using selfsigned or assertonly provider
+cryptography==2.8 # if using selfsigned or assertonly provider
+acme-tiny==4.1.0 # if using the acme provider
+PyYAML==5.3.1
+molecule[docker,lint]==3.0.2
+docker==4.2.0
+ansible==2.9.6
+yamllint==1.20.0

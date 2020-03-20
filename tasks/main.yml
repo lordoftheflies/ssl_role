@@ -26,10 +26,8 @@
 
 - name: "Initialize ssl facts"
   set_fact:
-    server_certificate_facts: {
-        keys: {},
-        crts: {}
-      }
+    server_certificate_crts: {}
+    server_certificate_keys: {}
 
 
 - name: "Setup SSL certificate"
@@ -38,7 +36,7 @@
       delegate_to: localhost
       stat:
         path: lookup('files', inventory_hostname + '.crt')
-      register: server_certificate_facts.crts[inventory_hostname]
+      register: "ssl_role_server_certificate_{{ inventory_hostname|regex_replace('.', '_') }}"
 
     - name: "Copy server certificate"
       become: true
@@ -77,7 +75,7 @@
         mode: u=rw
         state: file
   rescue:
-    - debug: msg="Could not setup server private key"
+    - debug: msg="Could not setup server for SSL"
   always:
     - name: "Check for certificate exists on remote"
       stat:

@@ -1,0 +1,12 @@
+---
+- name: "Play converge with shared server SSL keys ..."
+  become: true
+  hosts: servers_with_shared_keys
+  roles:
+    - role: ssl_role
+
+- name: "Play converge with local server SSL keys ..."
+  become: true
+  hosts: servers_with_local_keys
+  roles:
+    - role: ssl_role

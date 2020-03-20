@@ -1,0 +1,6 @@
+---
+- name: "Play cleanup"
+  hosts: servers_with_shared_keys
+  become: true
+  tasks:
+    - debug: msg="Play clean-up ..."

@@ -1,0 +1,30 @@
+---
+- name: "Play create for local SSL keys"
+  hosts: servers_with_local_keys
+  tasks:
+    - name: "Create certificates build directory for local-ssl if it does not exist"
+      file:
+        path: "{{ ssl_role_ssl_certs_local }}"
+        state: directory
+        recursive: true
+
+    - name: "Create private-keys build directory for local-ssl if it does not exist"
+      file:
+        path: "{{ ssl_role_ssl_private_local }}"
+        state: directory
+        recursive: true
+
+ - name: "Play destroy for shared SSL keys"
+   hosts: servers_with_shared_keys
+   tasks:
+     - name: "Create certificates build directory for shared-ssl if it does not exist"
+       file:
+         path: "{{ ssl_role_ssl_certs_shared }}"
+         state: directory
+         recursive: true
+
+     - name: "Create private-keys build directory for shared-ssl if it does not exist"
+       file:
+         path: "{{ ssl_role_ssl_private_shared }}"
+         state: directory
+         recursive: true

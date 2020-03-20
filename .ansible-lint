@@ -35,6 +35,8 @@ rules:
     level: warning
 ignore: |
   env
+  build
+  files
   .github
   .gitlab
   .vagrant

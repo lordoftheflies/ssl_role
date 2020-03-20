@@ -4,7 +4,15 @@ ssl_role_ca_file: "ca.pem"
 ssl_role_ca_key_file: "ca-key.pem"
 ssl_role_certificate_file: "cert.pem"
 
-ssl_role_certificate_key_file: "cert.pem"
+ssl_role_cert_key_file: "cert.pem"
 ssl_role_private_key_file: "key.pem"
 
 ssl_role_root_domain: 'cherubits.hu'
+
+ssl_role_symbolic_certificates:
+ssl_role_ssl_certs_shared:
+ssl_role_ssl_certs_local:
+ssl_role_ssl_certs_dir: '/etc/ssl/certs'
+ssl_role_ssl_private_shared:
+ssl_role_ssl_private_local:
+ssl_role_ssl_private_dir: '/etc/ssl/private'
