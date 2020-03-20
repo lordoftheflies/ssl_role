@@ -8,8 +8,6 @@ FROM {{ item.image }}
 
 USER root
 
-
-
 {% if item.env is defined %}
 {% for var, value in item.env.items() %}
 {% if value %}
@@ -25,9 +23,6 @@ RUN if [ $(command -v apt-get) ]; then apt-get update && apt-get install -y pyth
     elif [ $(command -v apk) ]; then apk update && apk add --no-cache python3.7 sudo bash ca-certificates; \
     elif [ $(command -v xbps-install) ]; then xbps-install -Syu && xbps-install -y python3.7 sudo bash ca-certificates iproute2 && xbps-remove -O; fi
 
-ENV ANSIBLE_USER=lordoftheflies
-ENV HOME=/home/$ANSIBLE_USER
-ENV PUBLIC_SSH_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDIBu/+giuDUjnOKV+fJvCSIbq+BP6qWPCM+fCZxlszfeSqY0SA8+3vCAE2iZoGkiIvENIbnwXAlrc+MvnqPJT+bOnArS7HEK4LKoXwtLboM/4KMWgqDJ2xfp+Svn4drnks1aVrkIsgGB7xdkmOVV8Us2hnFpYHovW3PzGrORNl+4bqrOwbmLZpt2TU67pJ0eCODE0ajk/fsOQSYcwAuWCjrPv2PVuasg/2PKWJsT3g2O/30vADQcwQVuOgBIFbG4iGx6sWMupcuZuXHbegK3OvDXiHNSg0eFYCdxfybGqW3c2wtm1Yc717ksQpBNocaAcKJmaRNL3dKB6fX7idhwC5n4unYKltTdwoGjakwwGCV3D0RXm0GZBA+upfGXpEgYtrLLVbqkBanNK9glt/3/vq17pGdIzPEwij014nHCq9a6/q0OdwN/3R4XOJ+jPHyR84KK4IyIRpnqcS9F8li6wwrGhfp4f6AQEejIG4RJTsaw4vG+Kmy/suGP5JUX9pQNtR8RN5vScdK2KDHFg/xDoHoMI6OzDl+HvcdacCY7CvNYd5gi6ak0mRj4BQ7rAKudaZ/k6mY5S2O7zOd3lsfKLU8QRdSjZ7B83kO9BPrugJ2du9PYytGPym5kqa2sj8dTorjh9lTHuXmL9WBwWgFnUY4Cr/VqSrbF/atRbAGTLDWQ== laszlo.hegedus@cherubits.hu"
 RUN set -x && apt-get install -y openssh-server openssh-client
 
 RUN mkdir /var/run/sshd
@@ -42,7 +37,7 @@ RUN chmod 755 -R /var/run/sshd
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 
-RUN adduser lordoftheflies
+RUN adduser $ANSIBLE_USER
 
 RUN mkdir -p /home/$ANSIBLE_USER/.ssh
 # ADD id_rsa /home/$ANSIBLE_USER/.ssh/id_rsa

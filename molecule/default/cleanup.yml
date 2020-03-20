@@ -1,6 +1,11 @@
 ---
 - name: "Play cleanup"
   hosts: servers_with_shared_keys
-  become: true
+  become: false
+  connection: local
+  gather_facts: false
   tasks:
-    - debug: msg="Play clean-up ..."
+    - debug: msg="..."
+
+    - debug: msg="User = {{ lookup('env', 'ANSIBLE_USER') }}"
+    - debug: msg="Public SSH key = {{ lookup('env', 'PUBLIC_SSH_KEY') }}"

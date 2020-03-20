@@ -1,30 +1,75 @@
 ---
 - name: "Play create for local SSL keys"
-  hosts: servers_with_local_keys
+  hosts: all
+  connection: local
+  gather_facts: false
   tasks:
-    - name: "Create certificates build directory for local-ssl if it does not exist"
-      file:
-        path: "{{ ssl_role_ssl_certs_local }}"
-        state: directory
-        recursive: true
+    - name: "Create Dockerfiles from image names"
+      template:
+        src: "{{ molecule_scenario_directory }}/Dockerfile.j2"
+        dest: "{{ molecule_ephemeral_directory }}/Dockerfile_{{ item.image | regex_replace('[^a-zA-Z0-9_]', '_') }}"
+      with_items: "{{ molecule_yml.platforms }}"
+      register: platforms
 
-    - name: "Create private-keys build directory for local-ssl if it does not exist"
-      file:
-        path: "{{ ssl_role_ssl_private_local }}"
-        state: directory
-        recursive: true
+    - debug: var=platforms
 
- - name: "Play destroy for shared SSL keys"
-   hosts: servers_with_shared_keys
-   tasks:
-     - name: "Create certificates build directory for shared-ssl if it does not exist"
-       file:
-         path: "{{ ssl_role_ssl_certs_shared }}"
-         state: directory
-         recursive: true
+    - name: "Build an Ansible compatible image"
+      docker_image:
+        name: "{{ item.image }}"
+        repository: "{{ item.registry.url }}/{{ item.image }}"
+        source: pull
+        push: false
+        pull: true
+        tls: false
+        use_tls: false
+        validate_certs: false
+        state: present
+        build:
+          pull: true
+          path: "{{ molecule_ephemeral_directory }}"
+          dockerfile: "{{ item.dockerfile }}"
+          target: "molecule_local/{{ item.image }}"
+        docker_host: "{{ lookup('env', 'DOCKER_HOST') }}"
+      with_items: "{{ platforms.results }}"
 
-     - name: "Create private-keys build directory for shared-ssl if it does not exist"
-       file:
-         path: "{{ ssl_role_ssl_private_shared }}"
-         state: directory
-         recursive: true
+    - name: "Create molecule instance(s)"
+      docker_container:
+        name: "{{ molecule_file | molecule_instance_with_scenario_name(item.name) }}"
+        hostname: "{{ molecule_file | molecule_instance_with_scenario_name(item.name) }}"
+        image: "molecule_local/{{ item.image }}"
+        state: started
+        recreate: false
+        log_driver: syslog
+        command: "{{ item.command | default('sleep infinity') }}"
+        privileged: "{{ item.privileged | default(omit) }}"
+        volumes: "{{ item.volumes | default(omit) }}"
+        capabilities: "{{ item.capabilities | default(omit) }}"
+      with_items: "{{ molecule_yml.platforms }}"
+
+#
+#    - name: "Create certificates build directory for local-ssl if it does not exist"
+#      file:
+#        path: "{{ ssl_role_ssl_certs_local }}"
+#        state: directory
+#        recursive: true
+#
+#    - name: "Create private-keys build directory for local-ssl if it does not exist"
+#      file:
+#        path: "{{ ssl_role_ssl_private_local }}"
+#        state: directory
+#        recursive: true
+#
+#- name: "Play destroy for shared SSL keys"
+#  hosts: servers_with_shared_keys
+#  tasks:
+#    - name: "Create certificates build directory for shared-ssl if it does not exist"
+#      file:
+#        path: "{{ ssl_role_ssl_certs_shared }}"
+#        state: directory
+#        recursive: true
+#
+#    - name: "Create private-keys build directory for shared-ssl if it does not exist"
+#      file:
+#        path: "{{ ssl_role_ssl_private_shared }}"
+#        state: directory
+#        recursive: true

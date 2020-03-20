@@ -1,62 +1,138 @@
 ---
 dependency:
   name: galaxy
+  options:
+    role-file: requirements.yml
 driver:
   name: docker
-lint:
-  name: yamllint
   options:
-    config-file: .ansible-lint
+    managed: true
+    login_cmd_template: 'docker exec -ti {instance} bash'
+    ansible_connection_options:
+      ansible_connection: docker
+#lint:
+#  name: yamllint
+#  enabled: true
+#  options:
+#    config-file: .ansible-lint
+lint: set -e yamllint -c .ansible-lint .
+#  ansible-lint -c .ansible-lint
+#  flake8 --config=.ansible-lint
 platforms:
-  - name: ubuntu1804
+#  - name: ubuntu1804
+#    hostname: instance
+#    debug: true
+#    image: library/ubuntu:18.04
+#    volumes:
+#      - ${HOME}/.ssh/id_rsa:/home/${USER}/.ssh/id_rsa
+#      - ${HOME}/.ssh/id_rsa.pub:/home/${USER}/.ssh/id_rsa.pub
+#      - /sys/fs/cgroup:/sys/fs/cgroup
+#      - /tmp:/tmp
+#      - /var/run/docker.sock:/var/run/docker.sock
+#    dockerfile: Dockerfile.j2
+#    pull: true
+#    tty: true
+#    registry:
+#      url: registry.hub.docker.com
+#      credentials:
+#        username: lordoftheflies
+#        password: 90e22074-32e9-4485-a292-4deee07227c6
+#        email: laszlo.hegedus@cherubits.hu
+#        user: root
+#    privileged: true
+#    pid_mode: host
+#    keep_volumes: true
+#    pre_build_image: false
+#    published_ports:
+#      - 0.0.0.0:8022:22/tcp
+#    dns_servers:
+#      - '8.8.8.8'
+#    etc_hosts:
+#      'c': '10.3.1.3'
+#      'b': '10.3.1.2'
+#      'a': '10.3.1.1'
+  - name: instance-docker
+    hostname: a.ssl.test
     debug: true
-    image: "library/ubuntu:18.04"
+    image: ansible/molecule:3.0.0
     volumes:
-      - '$HOME/.ssh/id_rsa:/home/$USER/.ssh/id_rsa'
-      - '$HOME/.ssh/id_rsa.pub:/home/$USER/.ssh/id_rsa.pub'
-      - '/sys/fs/cgroup:/sys/fs/cgroup'
-      - '/tmp:/tmp'
-      - '/var/run/docker.sock:/var/run/docker.sock'
-    dockerfile: 'Dockerfile.j2'
+      - ${HOME}/.ssh/id_rsa:/home/${USER}/.ssh/id_rsa
+      - ${HOME}/.ssh/id_rsa.pub:/home/${USER}/.ssh/id_rsa.pub
+      - ${HOME}/.ssh/authorized_keys:/home/${USER}/.ssh/authorized_keys
+      - ${HOME}/.ssh/known_hosts:/home/${USER}/.ssh/known_hosts
+      - /sys/fs/cgroup:/sys/fs/cgroup
+      - /tmp:/tmp
+      - /var/run/docker.sock:/var/run/docker.sock
+    dockerfile: Dockerfile.j2
     pull: true
     tty: true
-    registry:
-      url: 'registry.hub.docker.com'
-      credentials:
-        username: 'lordoftheflies'
-        password: '90e22074-32e9-4485-a292-4deee07227c6'
-        email: 'laszlo.hegedus@cherubits.hu'
-        user: 'root'
+#    override_command: true
+#    command: "/usr/sbin/init"
     privileged: true
     pre_build_image: false
+    registry:
+      url: quay.io
+      credentials:
+        username: lordoftheflies
+        password: fHBbWDOQHfYZUVc+Chlmt9F2e3A+L6gW5dkpJrcykBwDIhKBSmZaU9axHvkeUlQz
+        email: laszlo.hegedus@cherubits.hu
+        user: root
+#    pid_mode: host
+#    keep_volumes: true
+    tls_verify: false
     published_ports:
-      - '0.0.0.0:8022:22/tcp'
+      - 0.0.0.0:8022:22/tcp
+    ulimits:
+      - nofile:262144:262144
     dns_servers:
-      - '8.8.8.8'
-    etc_hosts:
-      'c.ssl.test': '10.3.1.3'
-      'b.ssl.test': '10.3.1.2'
-      'a.ssl.test': '10.3.1.1'
+      - 8.8.8.8
+    tmpfs:
+      - /tmp
+      - /run
+    security_opts:
+      - seccomp=unconfined
+    capabilities:
+      - SYS_ADMIN
+    sysctls:
+      net.core.somaxconn: 1024
+      net.ipv4.tcp_syncookies: 0
+    etc_hosts: {
+      'c.ssl.test': '172.17.0.1',
+      'b.ssl.test': '172.17.0.1',
+      'a.ssl.test': '172.17.0.1',
+    }
+    network_mode: host
+    purge_networks: true
+    networks:
+      - name: intranet
+      - name: internet
+    environment:
+      container: docker
+    env:
+      ANSIBLE_USER: ${MOLECULE_DOCKER_USER:-USER}
+      PUBLIC_SSH_KEY: ${MOLECULE_PUBLIC_SSH_KEY:-$(cat /home/${USER}/.ssh/id_rsa.pub)}
 provisioner:
   name: ansible
   log: true
+  lint:
+    name: ansible-lint
   playbooks:
     docker:
       create: create.yml
       destroy: destroy.yml
+    create: create.yml
+    destroy: destroy.yml
     converge: converge.yml
     cleanup: cleanup.yml
-  lint:
-    name: .ansible-lint
   inventory:
     hosts:
       servers_with_shared_keys:
-        vars:
-          ssl_role_certificate_key_file: "server.crt"
-          ssl_role_private_key_file: "server.key"
-          ssl_role_ssl_certs_dir: "{{ lookup('env', 'PWD') }}/build/certs"
-          ssl_role_ssl_private_dir: "{{ lookup('env', 'PWD') }}/build/private"
-          ssl_role_symbolic_certificates: false
+#        vars:
+#          ssl_role_certificate_key_file: "server.crt"
+#          ssl_role_private_key_file: "server.key"
+#          ssl_role_ssl_certs_dir: "{{ lookup('env', 'PWD') }}/build/certs"
+#          ssl_role_ssl_private_dir: "{{ lookup('env', 'PWD') }}/build/private"
+#          ssl_role_symbolic_certificates: false
         hosts:
           'a.ssl.test':
             endpoint: 'a.ssl.test'
@@ -68,16 +144,16 @@ provisioner:
             public: 'b.ssl.test'
             secure: 'b.ssl.test'
             ansible_user: ${USER}
-            private_key_file: ${HOME}/.ssh/id_rsa
+#            private_key_file: ${HOME}/.ssh/id_rsa
       servers_with_local_keys:
-        vars:
-          ssl_role_ssl_cert_key_file: "server.crt"
-          ssl_role_ssl_private_key_file: "server.key"
-          ssl_role_ssl_certs_local: "{{ lookup('env', 'PWD') }}/build/local/certs"
-          ssl_role_ssl_certs_shared: "{{ lookup('env', 'PWD') }}/build/shared/certs"
-          ssl_role_ssl_private_local: "{{ lookup('env', 'PWD') }}/build/local/private"
-          ssl_role_ssl_private_shared: "{{ lookup('env', 'PWD') }}/build/shared/private"
-          ssl_role_symbolic_certificates: true
+#        vars:
+#          ssl_role_ssl_cert_key_file: "server.crt"
+#          ssl_role_ssl_private_key_file: "server.key"
+#          ssl_role_ssl_certs_local: "{{ lookup('env', 'PWD') }}/build/local/certs"
+#          ssl_role_ssl_certs_shared: "{{ lookup('env', 'PWD') }}/build/shared/certs"
+#          ssl_role_ssl_private_local: "{{ lookup('env', 'PWD') }}/build/local/private"
+#          ssl_role_ssl_private_shared: "{{ lookup('env', 'PWD') }}/build/shared/private"
+#          ssl_role_symbolic_certificates: true
         hosts:
           'c.ssl.test':
             endpoint: 'c.ssl.test'
@@ -90,29 +166,30 @@ provisioner:
     DOCKER_TLS: ${MOLECULE_DOCKER_TLS_VERIFY:-0}
     DOCKER_TLS_VERIFY: ${MOLECULE_DOCKER_TLS_VERIFY:-0}
     DOCKER_VALIDATE_CERTS: ${MOLECULE_DOCKER_VALIDATE_CERTS:-0}
-    DOCKER_TLS_HOSTNAME: ${MOLECULE_DOCKER_TLS_HOSTNAME:-"leviathan"}
+    DOCKER_TLS_HOSTNAME: ${MOLECULE_DOCKER_TLS_HOSTNAME:-"staging"}
     USERNAME: ${MOLECULE_DOCKER_USER:-"lordoftheflies"}
     PASSWORD: ${MOLECULE_DOCKER_PASSWORD:-"90e22074-32e9-4485-a292-4deee07227c6"}
-#    PUBLIC_SSH_KEY: ${MOLECULE_PUBLIC_SSH_KEY:-"$(cat $HOME/.ssh/id_rsa.pub)"}
+    PUBLIC_SSH_KEY: ${MOLECULE_PUBLIC_SSH_KEY:-$(cat /home/${USER}/.ssh/id_rsa.pub)}
 #    DOCKER_CERT_PATH: ${MOLECULE_DOCKER_CERT_PATH:-"/etc/docker/ssl"}
   config_options:
     defaults:
       interpreter_python: /usr/bin/python3.7
       # roles_path: ../../../
       token: 2760cbdaf927dbdc9082fa3de73305540349b397
-      private_key_file: $HOME/.ssh/id_rsa
-      remote_user: $USER
-      become_user: $USER
-      remote_tmp: /tmp/.ansible-$USER/tmp
-      local_tmp: $HOME/.ansible/tmp
-    interpreter_python: /usr/bin/python3.7
-#    roles_path: ../../../
-    token: 2760cbdaf927dbdc9082fa3de73305540349b397
-    private_key_file: $HOME/.ssh/id_rsa
-    remote_user: $USER
-    become_user: $USER
-    remote_tmp: /tmp/.ansible-$USER/tmp
-    local_tmp: $HOME/.ansible/tmp
+      private_key_file: ${HOME}/.ssh/id_rsa
+      remote_user: ${USER}
+      become_user: ${USER}
+      remote_tmp: /tmp/.ansible-${USER}/tmp
+      local_tmp: ${HOME}/.ansible/tmp
+      remote_port: 22
+#    interpreter_python: /usr/bin/python3.7
+##    roles_path: ../../../
+#    token: 2760cbdaf927dbdc9082fa3de73305540349b397
+#    private_key_file: ${HOME}/.ssh/id_rsa
+#    remote_user: ${USER}
+#    become_user: ${USER}
+#    remote_tmp: /tmp/.ansible-${USER}/tmp
+#    local_tmp: ${HOME}/.ansible/tmp
       # private_key_file: ~/.ssh/id_rsa
 verifier:
   name: testinfra

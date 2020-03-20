@@ -1,7 +1,7 @@
 ---
-# Based on ansible-lint config
 extends: default
-
+skip_list:
+  - '301'
 rules:
   braces:
     max-spaces-inside: 1
@@ -25,9 +25,24 @@ rules:
     level: error
   indentation: disable
   key-duplicates: enable
-  line-length: disable
   new-line-at-end-of-file: disable
   new-lines:
     type: unix
   trailing-spaces: disable
   truthy: disable
+  line-length:
+    max: 160
+    level: warning
+ignore: |
+  env
+  build
+  files
+  .github
+  .gitlab
+  .vagrant
+  .ansible-lint
+  .env
+  .venv
+  .ansible
+  .ansible-galaxy
+  _config.yml

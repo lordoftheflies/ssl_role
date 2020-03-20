@@ -1,44 +1,58 @@
 ---
 
 - name: "Play destroy for hard SSL keys"
-  hosts: servers_with_shared_keys
+  hosts: all
+  connection: local
+  gather_facts: false
+  vars:
+    molecule_file: "{{ lookup('env', 'MOLECULE_FILE') }}"
+    molecule_yml: "{{ lookup('file', molecule_file) | from_yaml }}"
   tasks:
-    - name: "Create certificates build directory for ssl if it does not exist"
-      file:
-        path: "{{ ssl_role_ssl_certs_dir }}"
-        state: directory
-        recursive: true
-
-    - name: "Create private-keys build directory for ssl if it does not exist"
-      file:
-        path: "{{ ssl_role_ssl_private_dir }}"
-        state: directory
-        recursive: true
-
-
-- name: "Play destroy for linked SSL keys"
-  hosts: servers_with_local_keys
-  tasks:
-    - name: "Create certificates build directory for shared-ssl if it does not exist"
-      file:
-        path: "{{ ssl_role_ssl_certs_shared }}"
-        state: directory
-        recursive: true
-
-    - name: "Create private-keys build directory for shared-ssl if it does not exist"
-      file:
-        path: "{{ ssl_role_ssl_private_shared }}"
-        state: directory
-        recursive: true
-
-    - name: "Create certificates build directory for local-ssl if it does not exist"
-      file:
-        path: "{{ ssl_role_ssl_certs_local }}"
-        state: directory
-        recursive: true
-
-    - name: "Create private-keys build directory for local-ssl if it does not exist"
-      file:
-        path: "{{ ssl_role_ssl_private_local }}"
-        state: directory
-        recursive: true
+    - name: Destroy molecule instance(s)
+      docker_container:
+        name: "{{ item.name }}-{{ molecule_yml.scenario.name }}"
+        state: absent
+      with_items: "{{ molecule_yml.platforms }}"
+#
+#- name: "Play destroy for hard SSL keys"
+#  hosts: servers_with_shared_keys
+#  tasks:
+#    - name: "Create certificates build directory for ssl if it does not exist"
+#      file:
+#        path: "{{ ssl_role_ssl_certs_dir }}"
+#        state: directory
+#        recursive: true
+#
+#    - name: "Create private-keys build directory for ssl if it does not exist"
+#      file:
+#        path: "{{ ssl_role_ssl_private_dir }}"
+#        state: directory
+#        recursive: true
+#
+#
+#- name: "Play destroy for linked SSL keys"
+#  hosts: servers_with_local_keys
+#  tasks:
+#    - name: "Create certificates build directory for shared-ssl if it does not exist"
+#      file:
+#        path: "{{ ssl_role_ssl_certs_shared }}"
+#        state: directory
+#        recursive: true
+#
+#    - name: "Create private-keys build directory for shared-ssl if it does not exist"
+#      file:
+#        path: "{{ ssl_role_ssl_private_shared }}"
+#        state: directory
+#        recursive: true
+#
+#    - name: "Create certificates build directory for local-ssl if it does not exist"
+#      file:
+#        path: "{{ ssl_role_ssl_certs_local }}"
+#        state: directory
+#        recursive: true
+#
+#    - name: "Create private-keys build directory for local-ssl if it does not exist"
+#      file:
+#        path: "{{ ssl_role_ssl_private_local }}"
+#        state: directory
+#        recursive: true
