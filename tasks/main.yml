@@ -27,7 +27,7 @@
 - name: "Initialize ssl facts"
   set_fact:
     server_certificate_facts: {
-        keys: {}
+        keys: {},
         crts: {}
       }
 
