@@ -1,5 +1,5 @@
 PyOpenSSL==19.1.0 # if using selfsigned or assertonly provider
-cryptography==2.8 # if using selfsigned or assertonly provider
+cryptography==3.2 # if using selfsigned or assertonly provider
 acme-tiny==4.1.0 # if using the acme provider
 PyYAML==5.3.1
 ansible==2.9.6
